@@ -54,8 +54,8 @@ Overall_rank_change_upper <- Overall_rank_change_upper[, !(names(Overall_rank_ch
 data_wide <- spread(Overall_rank_change_upper, year, rank)
 data_wide[3:4] <- lapply(data_wide[3:4], as.numeric)
 data_wide <- mutate(data_wide, rank_change = data_wide$`1985` - data_wide$`2015`)
-  # looking at the change in rank, the U.S. has fallen the most 
-  # and Poland has increased the most
+# looking at the change in rank, the U.S. has fallen the most 
+# and Poland has increased the most
 
 ### show only every 5 years 
 mmr_upper_inc_rank_by_year$Year_formatted <- as.character(mmr_upper_inc_rank_by_year$year)
@@ -65,30 +65,13 @@ mmr_upper_inc_rank_by_year <- subset(mmr_upper_inc_rank_by_year, year %in% show_
 ### note rows for USA and POL, so that they can be highlighted later in visualization
 mmr_upper_inc_rank_by_year <- mutate(mmr_upper_inc_rank_by_year,
                                      highlight_country = case_when(iso == "USA" ~ 1,
-                                                                    iso == "POL" ~ 2,
-                                                                    TRUE ~ 0))
-
-
-
-set_theme <- theme(legend.position = "none", 
-                   panel.border = element_blank(),  
-                   # axis.title.y = element_blank(),
-                   axis.text.y = element_blank(),
-                   panel.grid.major.y = element_blank(),
-                   panel.grid.minor.y = element_blank(),
-                   axis.ticks = element_blank(),
-                   # axis.title.x = element_blank(),
-                   panel.grid.major.x = element_blank(),
-                   panel.grid.minor.x = element_blank(),
-                   axis.text.x = element_text(size=8, 
-                                              angle=45, 
-                                              margin = margin(t=-5))
-                   )
+                                                                   iso == "POL" ~ 2,
+                                                                   TRUE ~ 0))
 
 
 ggplot(data = mmr_upper_inc_rank_by_year, 
        aes(x = year, y = rev(rank), group = iso, color = factor(highlight_country), size = factor(highlight_country))) +
-  geom_line(alpha = 0.5) +
+  geom_line(alpha = 1) +
   scale_color_manual(values = c("grey", "red", "blue")) +
   scale_size_manual(values = c(0.25,1,1)) +
   geom_text(data = mmr_upper_inc_rank_by_year %>% filter(year == 1985),
@@ -109,9 +92,22 @@ ggplot(data = mmr_upper_inc_rank_by_year,
   scale_x_continuous(breaks = seq(1985, 2015, 5)) +
   # change to black and white theme:
   theme_bw() + 
-  set_theme +
+  theme(legend.position = "none", 
+        panel.border = element_blank(),  
+        # axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        axis.ticks = element_blank(),
+        # axis.title.x = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x = element_text(size=8, 
+                                   angle=45, 
+                                   margin = margin(t=-5))
+  ) +
   labs(title = "Among high income countries, United States falls in ranking of maternal mortality ratios; Poland shows greatest rise in rank",
-    subtitle = "Countries ranked by maternal mortality ratio (1 = lowest number of maternal deaths per 100,000 live births)",
-    caption = "Sources: https://www.who.int/reproductivehealth/publications/monitoring/maternal-mortality-2015/en/ and ") +
+       subtitle = "Countries ranked by maternal mortality ratio (1 = lowest number of maternal deaths per 100,000 live births)",
+       caption = "Sources: The World Health Organization / The World Bank") +
   xlab("Year") +
   ylab("Ranking (1 = lowest number maternal deaths per 100,000 live births)")
