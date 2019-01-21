@@ -118,7 +118,7 @@ sg <- ggplot(data = mmr_upper_inc_rank_by_year,
   #      subtitle = "Ranking of maternal mortality ratios of high-income* countries",
   #      caption = "*as categorized by the World Bank's 2019 fiscal year estimates \n\nSources: The World Health Organization / The World Bank") +
   xlab("Year") +
-  ylab("Rank \n(1 = lowest number maternal deaths per 100,000 live births)") +
+  ylab("Country ranking \n(1 = lowest number maternal deaths per 100,000 live births)") +
   # change to black and white theme:
   theme_bw() + 
   theme(
