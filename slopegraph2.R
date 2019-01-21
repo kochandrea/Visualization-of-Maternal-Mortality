@@ -98,7 +98,7 @@ ggplot(data = sum_region_data,
     
     plot.title = element_text(size = 20, face = "bold"),
     plot.subtitle = element_text(size = 10, margin = margin(t=0,r=0,b=1.5,l=0,unit="cm")),
-    plot.caption = element_text(size = 10, 
+    plot.caption = element_text(size = 7, 
                                 margin = margin(t=1,r=0,b=0,l=0,unit="in"), 
                                 hjust = 1,
                                 face = "italic"),

@@ -97,7 +97,7 @@ ggplot(merge_data, aes(x = year, y = total_matdeaths_region, fill = Region)) +
     plot.background = element_rect(fill = "#f2f2f2"),
     plot.title = element_text(size = 20, face = "bold"),
     plot.subtitle = element_text(size = 10, margin = margin(t=0,r=0,b=1.5,l=0,unit="cm")),
-    plot.caption = element_text(size = 10, 
+    plot.caption = element_text(size = 7, 
                                 margin = margin(t=1,r=0,b=0,l=0,unit="in"), 
                                 hjust = 1.5,
                                 face = "italic"),
