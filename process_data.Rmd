@@ -1,0 +1,230 @@
+---
+title: "D3_data"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+rm(list=ls())
+
+library(tidyverse)
+library(tidyr)
+library(dplyr)
+library(CGPfunctions)
+library(ggplot2)
+library(ggrepel)
+library(kableExtra)
+library(readxl)
+library(sqldf)
+library(scales)
+library(urbnmapr)
+library(extrafont)
+library(waffle)
+library(rasterVis)
+library(httr)
+library(sf)
+library(sp)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(RColorBrewer)
+library(gridExtra)
+library(grid)
+library(ggplot2)
+library(lattice)
+library(jsonlite)
+library(readr)
+```
+
+```{r}
+
+WHO_data <- read.csv("~/Desktop/Data Visualization/DV Maternal Mortality/data/WHO_MMR-data-1990-2015 (1)/countryresults_all.csv")
+
+# New table of mmr point estimates:
+mmr_data <- filter(WHO_data, 
+                     indicator %in% c("mmr", "matdeaths"), 
+                     estimate == "point estimate",
+                     rounded == "FALSE")
+WorldBank_data <- read_excel("~/Desktop/Data Visualization/DV Maternal Mortality/data/WB_country_region_income.xlsx")
+WorldBank_data <- WorldBank_data[,-c(3,6,7)]
+# Merge WHO and WB data:
+merge_data <- sqldf("SELECT * from mmr_data 
+                  LEFT OUTER join WorldBank_data 
+                  ON mmr_data.iso = WorldBank_data.Code")
+
+
+skilled_staff <- read.csv("~/Desktop/Data Visualization/DV Maternal Mortality/data/births-attended-by-health-staff-sdgs.csv", na.strings = c(""))
+names(skilled_staff)[4] <- "pct_attended"
+skilled_staff <- na.omit(skilled_staff)
+skilled_staff.agg <- aggregate(Year ~ Code, skilled_staff, max)
+skilled_staff.max <- merge(skilled_staff.agg, skilled_staff)
+skilled_staff.max <- subset(skilled_staff.max, Year >= 2010)
+#Citation for finding most recent year:  https://nsaunders.wordpress.com/2013/02/13/basic-r-rows-that-contain-the-maximum-value-of-a-variable/
+colnames(skilled_staff.max) <- paste("Staff", colnames(skilled_staff.max), sep = "_")
+
+merge_data2 <- left_join(merge_data, skilled_staff.max, c("iso" = "Staff_Code"))
+
+merge_data3 <- subset(merge_data2, select =c("name", "iso", "year", "indicator", "value", "Region", "Income group", "Staff_Year", "Staff_pct_attended"))
+
+
+
+# Create subsets by income, then rank countries by maternal mortality ratio (mmr):
+# UPPER INCOME
+upper_income_countries <- filter(merge_data3, `Income group` == "High income")
+ranked_mmr_upper_income <- filter(upper_income_countries, indicator == "mmr") %>%
+  arrange(year, value) %>% 
+  group_by(year) %>%              
+  mutate(rank = order(value))
+names(ranked_mmr_upper_income)[names(ranked_mmr_upper_income) == "value"] <- "mmr"
+ranked_mmr_upper_income <- subset(ranked_mmr_upper_income, select =c("name", "iso", "year", "rank", "mmr", "Region"))
+
+matdeaths_upper_income <- filter(upper_income_countries, indicator == "matdeaths") %>%
+  arrange(year, value) %>% 
+  group_by(year)
+names(matdeaths_upper_income)[names(matdeaths_upper_income) == "value"] <- "matdeaths"
+matdeaths_upper_income <- subset(matdeaths_upper_income, select =c("name", "iso", "year", "matdeaths", "Region"))
+
+upper_income_all_data <- left_join(ranked_mmr_upper_income, matdeaths_upper_income, c("name"="name", "iso"="iso", "year"="year", "Region"="Region"))
+
+
+#MID UPPER INCOME
+mid_upper_income_countries <- filter(merge_data3, `Income group` == "Upper middle income")
+ranked_mmr_midupper_income <- filter(mid_upper_income_countries, indicator == "mmr") %>%
+  arrange(year, value) %>% 
+  group_by(year) %>%              
+  mutate(rank = order(value))
+names(ranked_mmr_midupper_income)[names(ranked_mmr_midupper_income) == "value"] <- "mmr"
+ranked_mmr_midupper_income <- subset(ranked_mmr_midupper_income, select =c("name", "iso", "year", "rank", "mmr", "Region"))
+
+matdeaths_midupper_income <- filter(mid_upper_income_countries, indicator == "matdeaths") %>%
+  arrange(year, value) %>% 
+  group_by(year)
+names(matdeaths_midupper_income)[names(matdeaths_midupper_income) == "value"] <- "matdeaths"
+matdeaths_midupper_income <- subset(matdeaths_midupper_income, select =c("name", "iso", "year", "matdeaths", "Region"))
+
+mid_upper_income_all_data <- left_join(ranked_mmr_midupper_income, matdeaths_midupper_income, c("name"="name", "iso"="iso", "year"="year", "Region"="Region"))
+
+# MID LOWER INCOME
+mid_lower_income_countries <- filter(merge_data3, `Income group` == "Lower middle income")
+ranked_mmr_midlower_income <- filter(mid_lower_income_countries, indicator == "mmr") %>%
+  arrange(year, value) %>% 
+  group_by(year) %>%              
+  mutate(rank = order(value))
+names(ranked_mmr_midlower_income)[names(ranked_mmr_midlower_income) == "value"] <- "mmr"
+ranked_mmr_midlower_income <- subset(ranked_mmr_midlower_income, select =c("name", "iso", "year", "rank", "mmr", "Region"))
+
+matdeaths_midlower_income <- filter(mid_lower_income_countries, indicator == "matdeaths") %>%
+  arrange(year, value) %>% 
+  group_by(year)
+names(matdeaths_midlower_income)[names(matdeaths_midlower_income) == "value"] <- "matdeaths"
+matdeaths_midlower_income <- subset(matdeaths_midlower_income, select =c("name", "iso", "year", "matdeaths", "Region"))
+
+mid_lower_income_all_data <- left_join(ranked_mmr_midlower_income, matdeaths_midlower_income, c("name"="name", "iso"="iso", "year"="year", "Region"="Region"))
+
+#LOWER INCOME
+lower_income_countries <- filter(merge_data3, `Income group` == "Low income")
+ranked_mmr_low_income <- filter(lower_income_countries, indicator == "mmr") %>%
+  arrange(year, value) %>% 
+  group_by(year) %>%              
+  mutate(rank = order(value))
+names(ranked_mmr_low_income)[names(ranked_mmr_low_income) == "value"] <- "mmr"
+ranked_mmr_low_income <- subset(ranked_mmr_low_income, select =c("name", "iso", "year", "rank", "mmr", "Region"))
+
+matdeaths_low_income <- filter(lower_income_countries, indicator == "matdeaths") %>%
+  arrange(year, value) %>% 
+  group_by(year)
+names(matdeaths_low_income)[names(matdeaths_low_income) == "value"] <- "matdeaths"
+matdeaths_low_income <- subset(matdeaths_low_income, select =c("name", "iso", "year", "matdeaths", "Region"))
+
+low_income_all_data <- left_join(ranked_mmr_low_income, matdeaths_low_income, c("name"="name", "iso"="iso", "year"="year", "Region"="Region"))
+
+
+
+# # Show only every 5 years:
+# show_years <- c(2015, 2010, 2005, 2000, 1995, 1990, 1985)
+# ranked_mmr_upper_income$year <- as.character(ranked_mmr_upper_income$year)
+# ranked_mmr_upper_income <- subset(ranked_mmr_upper_income, year %in% show_years)
+# 
+# ranked_mmr_midupper_income$year <- as.character(ranked_mmr_midupper_income$year)
+# ranked_mmr_midupper_income <- subset(ranked_mmr_midupper_income, year %in% show_years)
+# 
+# ranked_mmr_midlower_income$year <- as.character(ranked_mmr_midlower_income$year)
+# ranked_mmr_midlower_income <- subset(ranked_mmr_midlower_income, year %in% show_years)
+# 
+# ranked_mmr_low_income$year <- as.character(ranked_mmr_low_income$year)
+# ranked_mmr_low_income <- subset(ranked_mmr_low_income, year %in% show_years)
+
+# Show only every 5 years:
+show_years <- c(2015, 2010, 2005, 2000, 1995, 1990, 1985)
+upper_income_all_data$year <- as.character(upper_income_all_data$year)
+upper_income_all_data <- subset(upper_income_all_data, year %in% show_years)
+
+mid_upper_income_all_data$year <- as.character(mid_upper_income_all_data$year)
+mid_upper_income_all_data <- subset(mid_upper_income_all_data, year %in% show_years)
+
+mid_lower_income_all_data$year <- as.character(mid_lower_income_all_data$year)
+mid_lower_income_all_data <- subset(mid_lower_income_all_data, year %in% show_years)
+
+low_income_all_data$year <- as.character(low_income_all_data$year)
+low_income_all_data <- subset(low_income_all_data, year %in% show_years)
+
+
+# #all high income data
+# my_json <- toJSON(ranked_mmr_upper_income, pretty=TRUE)
+# my_json %>% write_lines("~/Desktop/Data Visualization/D3-Maternal-Mortality/data/high_income_matmort.json")
+# 
+# #all upper middle income data
+# my_json <- toJSON(ranked_mmr_midupper_income, pretty=TRUE)
+# my_json %>% write_lines("~/Desktop/Data Visualization/D3-Maternal-Mortality/data/upper_mid_income_matmort.json")
+# 
+# #all lower middle income data
+# my_json <- toJSON(ranked_mmr_midlower_income, pretty=TRUE)
+# my_json %>% write_lines("~/Desktop/Data Visualization/D3-Maternal-Mortality/data/lower_mid_income_matmort.json")
+# 
+# #all low income data
+# my_json <- toJSON(ranked_mmr_low_income, pretty=TRUE)
+# my_json %>% write_lines("~/Desktop/Data Visualization/D3-Maternal-Mortality/data/low_income_matmort.json")
+
+
+#NEW all high income data
+my_json <- toJSON(upper_income_all_data, pretty=TRUE)
+my_json %>% write_lines("~/Desktop/Data Visualization/D3-Maternal-Mortality/data/high_income.json")
+
+#NEW all upper middle income data
+my_json <- toJSON(mid_upper_income_all_data, pretty=TRUE)
+my_json %>% write_lines("~/Desktop/Data Visualization/D3-Maternal-Mortality/data/upper_mid_income.json")
+
+#NEW all lower middle income data
+my_json <- toJSON(mid_lower_income_all_data, pretty=TRUE)
+my_json %>% write_lines("~/Desktop/Data Visualization/D3-Maternal-Mortality/data/lower_mid_income.json")
+
+#NEW all low income data
+my_json <- toJSON(low_income_all_data, pretty=TRUE)
+my_json %>% write_lines("~/Desktop/Data Visualization/D3-Maternal-Mortality/data/low_income.json")
+
+
+
+
+
+# fake_data <- subset(ranked_mmr_of_upper_income, iso %in% c("USA", "GRC", "POL"))
+# my_json <- toJSON(fake_data, pretty=TRUE)
+# my_json %>% write_lines("~/Desktop/Data Visualization/D3-Maternal-Mortality/data/fake_data2.json")
+
+## just 2015 data
+# show_years <- c(2015)
+# ranked_2015 <- subset(ranked_mmr_of_upper_income, year %in% show_years)
+# my_json <- toJSON(ranked_2015, pretty=TRUE)
+# my_json %>% write_lines("~/Desktop/Data Visualization/Maternal-Mortality-D3/D3_final_iter1/data/matmort_2015.json")
+
+# write.csv(ranked_mmr_of_upper_income, "~/Desktop/Data Visualization/Maternal-Mortality-D3/D3_final_iter1/data/upper_matmort.csv", sep = ",", row.names = FALSE, col.names = TRUE)
+# 
+# keep_cols <- c("iso", "year", "rank")
+# ranked_reduced <- ranked_mmr_of_upper_income[, (names(ranked_mmr_of_upper_income) %in% keep_cols)]
+# my_json <- toJSON(ranked_reduced, pretty=TRUE)
+# my_json %>% write_lines("~/Desktop/Data Visualization/Maternal-Mortality-D3/D3_final_iter1/data/matmort_reduced.json")
+
+
+```
+
+
