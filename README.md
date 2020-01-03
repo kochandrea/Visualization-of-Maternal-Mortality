@@ -2,7 +2,7 @@
 
 This visualization project focuses on maternal mortality trends both globally and within the United States.
 
-[Click here](https://kochandrea.github.io/Visualization-of-Maternal-Mortality/) to view the static graphs.
+[Click here](https://kochandrea.github.io/Visualization-of-Maternal-Mortality/) to view the static graphs and article.
 
 [Click here](https://kochandrea.github.io/D3-Maternal-Mortality/) to view the interactive graph.
 
